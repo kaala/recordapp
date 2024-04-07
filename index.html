@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=480">
+    <title>屏幕录制</title>
+</head>
+
+<body>
+    <div id="main">
+        <h1>屏幕录制</h1>
+        <video id="stream" width="480px" height="320px" controls></video>
+        <a id="download"></a>
+        <div>
+            <button id="start-record" type="button" onclick="vid.record()">录制</button>
+            <button id="stop-record" type="button" onclick="vid.stoprecord()">停止录制</button>
+        </div>
+    </div>
+
+    <style>
+        body { margin: 0px; padding: 0px; }
+        div { margin: 10px auto; }
+        div#main { width: 480px; }
+        button { display: inline-block; padding: 10px 20px; margin-left: 20px; }
+    </style>
+
+    <script>
+        var vid = {};
+        var rec = { video: { width: { ideal: 1920 }, height: { ideal: 1080 }, }, audio: {}, };
+        vid.record = function () {
+            navigator.mediaDevices.getDisplayMedia(rec).then(function (stream) {
+                var data = [];
+                var media = new MediaRecorder(stream, { mimeType: "video/webm; codecs=vp9" });
+                media.onstop = function (e) {
+                    var blob = new Blob(data, { type: 'video/webm' });
+                    var url = URL.createObjectURL(blob);
+                    var preview = document.querySelector('video#stream');
+                    preview.src = url;
+                    var down = document.querySelector('a#download');
+                    down.innerHTML = url;
+                    down.href = url;
+                    down.download = `record-${stream.id}.webm`;
+                    down.click();
+                }
+                media.ondataavailable = function (e) {
+                    data.push(e.data);
+                }
+                stream.oninactive = function (e) {
+                    media.stop();
+                }
+                media.start();
+                vid.data = data;
+                vid.media = media;
+                vid.stream = stream;
+            })
+        };
+        vid.stoprecord = function () {
+            var media = vid.media;
+            media.stop();
+        };
+    </script>
+</body>
+
+</html>
